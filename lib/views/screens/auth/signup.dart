@@ -189,6 +189,8 @@ class _SignUpState extends State<SignUp> with WidgetsBindingObserver {
                           validator: (value) {
                             if (value.isEmpty) {
                               return 'Ingresa tu contraseña';
+                            } else if (value.length < 8) {
+                              return 'La contraseña debe contener al menos 8 carácteres';
                             } else if (value !=
                                 _passwordConfTextController.text) {
                               return 'Las contraseñas no son iguales';
