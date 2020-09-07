@@ -1,4 +1,4 @@
-# app
+# QuickPlanner
 
 A new Flutter project.
 
