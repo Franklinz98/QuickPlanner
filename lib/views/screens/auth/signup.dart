@@ -1,3 +1,4 @@
+import 'package:app/backend/authentication.dart';
 import 'package:app/constants/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -188,6 +189,9 @@ class _SignUpState extends State<SignUp> with WidgetsBindingObserver {
                           validator: (value) {
                             if (value.isEmpty) {
                               return 'Ingresa tu contraseña';
+                            } else if (value !=
+                                _passwordConfTextController.text) {
+                              return 'Las contraseñas no son iguales';
                             }
                             return null;
                           },
@@ -216,6 +220,8 @@ class _SignUpState extends State<SignUp> with WidgetsBindingObserver {
                           validator: (value) {
                             if (value.isEmpty) {
                               return 'Confirma tu contraseña';
+                            } else if (value != _passwordTextController.text) {
+                              return 'Las contraseñas no son iguales';
                             }
                             return null;
                           },
@@ -231,7 +237,15 @@ class _SignUpState extends State<SignUp> with WidgetsBindingObserver {
                           ),
                           child: FlatButton(
                             onPressed: () {
-                              if (_formKey.currentState.validate()) {}
+                              if (_formKey.currentState.validate()) {
+                                signUp(
+                                        _emailTextController.text,
+                                        _passwordConfTextController.text,
+                                        _nameTextController.text,
+                                        _phoneTextController.text)
+                                    .then((value) => print(
+                                        "${_nameTextController.text} registrado"));
+                              }
                             },
                             child: Text(
                               "REGISTRARSE",

@@ -1,15 +1,15 @@
-/* import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:app/models/user.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:quick_planner/models/user.dart';
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
-final db = FirebaseFirestore.instance;
+final FirebaseFirestore firestore = FirebaseFirestore.instance;
 QuickPlannerUser currentSignedInUser;
 
-Future<QuickPlannerUser> signInWithFirebase(email, password) async {
-  var fbuser;
+Future<QuickPlannerUser> signIn(email, password) async {
+  UserCredential userCredential;
   try {
-    fbuser = await _auth.signInWithEmailAndPassword(
+    userCredential = await _auth.signInWithEmailAndPassword(
         email: email, password: password);
   } catch (error) {
     print('ERRORS');
@@ -18,25 +18,25 @@ Future<QuickPlannerUser> signInWithFirebase(email, password) async {
     return null;
   }
   final DocumentSnapshot userSnapshot =
-      await db.collection('users').doc(fbuser.uid).get();
-  updateCurrentSignedInUser(fbuser, userSnapshot);
+      await firestore.collection('users').doc(userCredential.user.uid).get();
+  updateCurrentSignedInUser(userCredential.user, userSnapshot);
   return currentSignedInUser;
 }
 
-Future<QuickPlannerUser> signUpWithFirebase(
+Future<QuickPlannerUser> signUp(
     email, password, name, phone) async {
-  var fbUser;
+  UserCredential userCredential;
   try {
-    fbUser = await _auth.createUserWithEmailAndPassword(
+    userCredential = await _auth.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
   } catch (error) {
     throw Exception(error.code);
   }
-  if (fbUser.email == email) {
+  if (userCredential.user.email == email) {
     try {
-      var user = _auth.currentUser;
+      User user = _auth.currentUser;
       user.updateProfile(displayName: name);
     } catch (error) {
       print(error);
@@ -46,10 +46,13 @@ Future<QuickPlannerUser> signUpWithFirebase(
     throw Exception('ERROR_SET_NAME');
   }
 
-  currentSignedInUser =
-      QuickPlannerUser(email: email, name: name, phone: phone, uid: fbUser.uid);
+  currentSignedInUser = QuickPlannerUser(
+      email: email, name: name, phone: phone, uid: userCredential.user.uid);
   print('currentSignedInUser' + currentSignedInUser.toString());
-  await db.collection('users').doc(fbUser.uid).set(currentSignedInUser.toMap());
+  await firestore
+      .collection('users')
+      .doc(userCredential.user.uid)
+      .set(currentSignedInUser.toMap());
   return currentSignedInUser;
 }
 
@@ -72,4 +75,3 @@ Future<bool> signOutFirebase() async {
   await _auth.signOut();
   return true;
 }
- */

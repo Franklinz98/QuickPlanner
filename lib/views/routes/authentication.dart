@@ -1,6 +1,7 @@
 import 'package:app/views/screens/auth/forgotten_password.dart';
 import 'package:app/views/screens/auth/login.dart';
 import 'package:app/views/screens/auth/signup.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 class Authentication extends StatefulWidget {
@@ -18,6 +19,7 @@ class _AuthState extends State<Authentication> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    Firebase.initializeApp();
     WidgetsBinding.instance.addObserver(this);
   }
 

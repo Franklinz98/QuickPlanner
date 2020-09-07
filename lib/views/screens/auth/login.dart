@@ -1,3 +1,4 @@
+import 'package:app/backend/authentication.dart';
 import 'package:app/constants/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -93,6 +94,7 @@ class _LoginState extends State<Login> with WidgetsBindingObserver {
                             contentPadding: EdgeInsets.symmetric(
                                 vertical: 8, horizontal: 12),
                           ),
+                          keyboardType: TextInputType.emailAddress,
                           controller: _emailTextController,
                           validator: (value) {
                             if (value.isEmpty) {
@@ -159,7 +161,11 @@ class _LoginState extends State<Login> with WidgetsBindingObserver {
                           ),
                           child: FlatButton(
                             onPressed: () {
-                              if (_formKey.currentState.validate()) {}
+                              if (_formKey.currentState.validate()) {
+                                signIn(_emailTextController.text,
+                                        _passwordTextController.text)
+                                    .then((value) => print("logged in"));
+                              }
                             },
                             child: Text(
                               "INICIAR SESIÓN",
