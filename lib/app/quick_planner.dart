@@ -1,5 +1,6 @@
 import 'package:app/constants/colors.dart';
 import 'package:app/views/routes/authentication.dart';
+import 'package:app/views/routes/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -19,7 +20,7 @@ class QuickPlannerApp extends StatelessWidget {
         accentColor: QuickPlannerColors.burnt_sienna,
         cursorColor: QuickPlannerColors.burnt_sienna,
       ),
-      home: Authentication(),
+      home: Main(),
     );
   }
 }
