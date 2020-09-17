@@ -1,6 +1,10 @@
+import 'package:app/backend/authentication.dart';
+import 'package:app/constants/enums.dart';
+import 'package:app/views/routes/main.dart';
 import 'package:app/views/screens/auth/forgotten_password.dart';
 import 'package:app/views/screens/auth/login.dart';
 import 'package:app/views/screens/auth/signup.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -12,14 +16,27 @@ class Authentication extends StatefulWidget {
 class _AuthState extends State<Authentication> with WidgetsBindingObserver {
   Brightness _brightnessValue;
   Widget _content;
-  Login _login;
-  SignUp _signUp;
-  Forgotten _forgotten;
+  AuthScreen _authScreen;
 
   @override
   void initState() {
     super.initState();
-    Firebase.initializeApp();
+    Firebase.initializeApp().then((value) {
+      User firebaseUser = currentUser();
+      if (firebaseUser != null) {
+        getUserDetails(firebaseUser).then((user) async {
+          user.admin = await isAdmin(user.uid);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (BuildContext context) => Main(
+                user: user,
+              ),
+            ),
+          );
+        });
+      }
+    });
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -27,34 +44,21 @@ class _AuthState extends State<Authentication> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     double _screenWidth = MediaQuery.of(context).size.width;
     _brightnessValue ??= MediaQuery.of(context).platformBrightness;
-    _login ??= Login(
+    _content ??= Login(
       deviceBrightness: _brightnessValue,
       onScreenSwitch: () {
         setState(() {
-          _content = _signUp;
+          _authScreen = AuthScreen.signup;
+          updateScreen();
         });
       },
       forgottenPasswordTap: () {
         setState(() {
-          _content = _forgotten;
+          _authScreen = AuthScreen.forgotten;
+          updateScreen();
         });
       },
     );
-    _signUp ??= SignUp(
-        deviceBrightness: _brightnessValue,
-        onScreenSwitch: () {
-          setState(() {
-            _content = _login;
-          });
-        });
-    _forgotten ??= Forgotten(
-        deviceBrightness: _brightnessValue,
-        onScreenSwitch: () {
-          setState(() {
-            _content = _login;
-          });
-        });
-    _content ??= _login;
     return Scaffold(
       body: Stack(
         children: [
@@ -82,6 +86,48 @@ class _AuthState extends State<Authentication> with WidgetsBindingObserver {
         ],
       ),
     );
+  }
+
+  updateScreen() {
+    switch (_authScreen) {
+      case AuthScreen.login:
+        _content = Login(
+          deviceBrightness: _brightnessValue,
+          onScreenSwitch: () {
+            setState(() {
+              _authScreen = AuthScreen.signup;
+              updateScreen();
+            });
+          },
+          forgottenPasswordTap: () {
+            setState(() {
+              _authScreen = AuthScreen.forgotten;
+              updateScreen();
+            });
+          },
+        );
+        break;
+      case AuthScreen.signup:
+        _content = SignUp(
+            deviceBrightness: _brightnessValue,
+            onScreenSwitch: () {
+              setState(() {
+                _authScreen = AuthScreen.login;
+                updateScreen();
+              });
+            });
+        break;
+      case AuthScreen.forgotten:
+        _content = Forgotten(
+            deviceBrightness: _brightnessValue,
+            onScreenSwitch: () {
+              setState(() {
+                _authScreen = AuthScreen.forgotten;
+                updateScreen();
+              });
+            });
+        break;
+    }
   }
 
   @override

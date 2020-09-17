@@ -1,5 +1,7 @@
 import 'package:app/backend/authentication.dart';
 import 'package:app/constants/colors.dart';
+import 'package:app/views/routes/main.dart';
+import 'package:app/widgets/button.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -54,7 +56,7 @@ class _SignUpState extends State<SignUp> with WidgetsBindingObserver {
                 decoration: BoxDecoration(
                   color: brightnessValue == Brightness.light
                       ? Colors.white
-                      : QuickPlannerColors.nero,
+                      : QPColors.nero,
                   boxShadow: [
                     BoxShadow(
                       offset: Offset(0.00, 3.00),
@@ -78,8 +80,8 @@ class _SignUpState extends State<SignUp> with WidgetsBindingObserver {
                             fontWeight: FontWeight.w600,
                             fontSize: 18,
                             color: brightnessValue == Brightness.light
-                                ? QuickPlannerColors.san_juan
-                                : QuickPlannerColors.gainsboro,
+                                ? QPColors.san_juan
+                                : QPColors.gainsboro,
                           ),
                         ),
                         SizedBox(
@@ -231,35 +233,33 @@ class _SignUpState extends State<SignUp> with WidgetsBindingObserver {
                         SizedBox(
                           height: 24.0,
                         ),
-                        Container(
-                          height: 42.00,
-                          decoration: BoxDecoration(
-                            color: Color(0xffe86450),
-                            borderRadius: BorderRadius.circular(4.00),
-                          ),
-                          child: FlatButton(
-                            onPressed: () {
-                              if (_formKey.currentState.validate()) {
-                                signUp(
-                                        _emailTextController.text,
-                                        _passwordConfTextController.text,
-                                        _nameTextController.text,
-                                        _phoneTextController.text)
-                                    .then((value) => print(
-                                        "${_nameTextController.text} registrado"));
-                              }
-                            },
-                            child: Text(
-                              "REGISTRARSE",
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.montserrat(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        )
+                        QuickPlannerButton(
+                          text: 'registrarse',
+                          onPressed: () {
+                            if (_formKey.currentState.validate()) {
+                              Scaffold.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Por favor espera..."),
+                                ),
+                              );
+                              signUp(
+                                      _emailTextController.text,
+                                      _passwordConfTextController.text,
+                                      _nameTextController.text,
+                                      _phoneTextController.text)
+                                  .then((user) {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (BuildContext context) => Main(
+                                      user: user,
+                                    ),
+                                  ),
+                                );
+                              });
+                            }
+                          },
+                        ),
                       ],
                     ),
                   ),

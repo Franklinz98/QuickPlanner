@@ -1,4 +1,6 @@
+import 'package:app/backend/authentication.dart';
 import 'package:app/constants/colors.dart';
+import 'package:app/widgets/button.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -42,7 +44,7 @@ class _ForgottenState extends State<Forgotten> with WidgetsBindingObserver {
                 decoration: BoxDecoration(
                   color: brightnessValue == Brightness.light
                       ? Colors.white
-                      : QuickPlannerColors.nero,
+                      : QPColors.nero,
                   boxShadow: [
                     BoxShadow(
                       offset: Offset(0.00, 3.00),
@@ -66,8 +68,8 @@ class _ForgottenState extends State<Forgotten> with WidgetsBindingObserver {
                             fontWeight: FontWeight.w600,
                             fontSize: 18,
                             color: brightnessValue == Brightness.light
-                                ? QuickPlannerColors.san_juan
-                                : QuickPlannerColors.gainsboro,
+                                ? QPColors.san_juan
+                                : QPColors.gainsboro,
                           ),
                         ),
                         SizedBox(
@@ -90,29 +92,29 @@ class _ForgottenState extends State<Forgotten> with WidgetsBindingObserver {
                         SizedBox(
                           height: 24.0,
                         ),
-                        Container(
-                          height: 42.00,
-                          decoration: BoxDecoration(
-                            color: Color(0xffe86450),
-                            borderRadius: BorderRadius.circular(4.00),
-                          ),
-                          child: FlatButton(
-                            onPressed: () {
-                              if (_formKey.currentState.validate()) {
-                                
-                              }
-                            },
-                            child: Text(
-                              "RECUPERAR CONTRASEÑA",
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.montserrat(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        )
+                        QuickPlannerButton(
+                          text: 'recuperar contraseña',
+                          onPressed: () {
+                            if (_formKey.currentState.validate()) {
+                              Scaffold.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Verificando..."),
+                                ),
+                              );
+                              recover(_emailTextController.text).then((value) {
+                                if (value) {
+                                  widget.onScreenSwitch.call();
+                                } else {
+                                  Scaffold.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text("Vuelve a intentarlo."),
+                                    ),
+                                  );
+                                }
+                              });
+                            }
+                          },
+                        ),
                       ],
                     ),
                   ),

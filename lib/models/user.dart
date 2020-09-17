@@ -1,12 +1,13 @@
 import 'package:flutter/foundation.dart';
 
-class QuickPlannerUser {
+class QPUser {
   final String email;
   final String name;
   final String phone;
   final String uid;
+  bool admin = false;
 
-  QuickPlannerUser({
+  QPUser({
     @required this.email,
     @required this.name,
     @required this.phone,
@@ -17,10 +18,10 @@ class QuickPlannerUser {
     return {'email': email, 'name': name, 'phone': phone};
   }
 
-  factory QuickPlannerUser.fromMap(String uid, Map<String, dynamic> map) {
+  factory QPUser.fromMap(String uid, Map<String, dynamic> map) {
     assert(uid != null);
     assert(map != null);
-    return QuickPlannerUser(
+    return QPUser(
       email: map['email'],
       name: map['name'],
       phone: map['phone'],

@@ -4,9 +4,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 final FirebaseFirestore firestore = FirebaseFirestore.instance;
-QuickPlannerUser currentSignedInUser;
+QPUser currentSignedInUser;
 
-Future<QuickPlannerUser> signIn(email, password) async {
+User currentUser() {
+  return _auth.currentUser;
+}
+
+Future<QPUser> signIn(email, password) async {
   UserCredential userCredential;
   try {
     userCredential = await _auth.signInWithEmailAndPassword(
@@ -19,12 +23,12 @@ Future<QuickPlannerUser> signIn(email, password) async {
   }
   final DocumentSnapshot userSnapshot =
       await firestore.collection('users').doc(userCredential.user.uid).get();
-  updateCurrentSignedInUser(userCredential.user, userSnapshot);
+  currentSignedInUser =
+      QPUser.fromMap(userCredential.user.uid, userSnapshot.data());
   return currentSignedInUser;
 }
 
-Future<QuickPlannerUser> signUp(
-    email, password, name, phone) async {
+Future<QPUser> signUp(email, password, name, phone) async {
   UserCredential userCredential;
   try {
     userCredential = await _auth.createUserWithEmailAndPassword(
@@ -46,7 +50,7 @@ Future<QuickPlannerUser> signUp(
     throw Exception('ERROR_SET_NAME');
   }
 
-  currentSignedInUser = QuickPlannerUser(
+  currentSignedInUser = QPUser(
       email: email, name: name, phone: phone, uid: userCredential.user.uid);
   print('currentSignedInUser' + currentSignedInUser.toString());
   await firestore
@@ -56,7 +60,7 @@ Future<QuickPlannerUser> signUp(
   return currentSignedInUser;
 }
 
-Future<bool> recoverWithFirebase(email) async {
+Future<bool> recover(email) async {
   try {
     await _auth.sendPasswordResetEmail(email: email);
     return true;
@@ -65,12 +69,21 @@ Future<bool> recoverWithFirebase(email) async {
   }
 }
 
-void updateCurrentSignedInUser(User user, DocumentSnapshot userSnapshot) {
-  print("updating email");
-  currentSignedInUser = QuickPlannerUser.fromMap(user.uid, userSnapshot.data());
+Future<QPUser> getUserDetails(User user) async {
+  final DocumentSnapshot userSnapshot =
+      await firestore.collection('users').doc(user.uid).get();
+  currentSignedInUser = QPUser.fromMap(user.uid, userSnapshot.data());
+  return currentSignedInUser;
 }
 
-Future<bool> signOutFirebase() async {
+Future<bool> isAdmin(String uid) async {
+  final DocumentSnapshot adminsSnapshot =
+      await firestore.collection('users').doc("privileges").get();
+  List admins = adminsSnapshot.data()['admins'];
+  return admins.contains(uid);
+}
+
+Future<bool> signOut() async {
   currentSignedInUser = null;
   await _auth.signOut();
   return true;

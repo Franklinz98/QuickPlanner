@@ -1,5 +1,7 @@
 import 'package:app/backend/authentication.dart';
 import 'package:app/constants/colors.dart';
+import 'package:app/views/routes/main.dart';
+import 'package:app/widgets/button.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -47,7 +49,7 @@ class _LoginState extends State<Login> with WidgetsBindingObserver {
                 decoration: BoxDecoration(
                   color: brightnessValue == Brightness.light
                       ? Colors.white
-                      : QuickPlannerColors.nero,
+                      : QPColors.nero,
                   boxShadow: [
                     BoxShadow(
                       offset: Offset(0.00, 3.00),
@@ -71,8 +73,8 @@ class _LoginState extends State<Login> with WidgetsBindingObserver {
                             fontWeight: FontWeight.w600,
                             fontSize: 18,
                             color: brightnessValue == Brightness.light
-                                ? QuickPlannerColors.san_juan
-                                : QuickPlannerColors.gainsboro,
+                                ? QPColors.san_juan
+                                : QPColors.gainsboro,
                           ),
                         ),
                         SizedBox(
@@ -153,31 +155,31 @@ class _LoginState extends State<Login> with WidgetsBindingObserver {
                         SizedBox(
                           height: 8.0,
                         ),
-                        Container(
-                          height: 42.00,
-                          decoration: BoxDecoration(
-                            color: Color(0xffe86450),
-                            borderRadius: BorderRadius.circular(4.00),
-                          ),
-                          child: FlatButton(
-                            onPressed: () {
-                              if (_formKey.currentState.validate()) {
-                                signIn(_emailTextController.text,
-                                        _passwordTextController.text)
-                                    .then((value) => print("logged in"));
-                              }
-                            },
-                            child: Text(
-                              "INICIAR SESIÓN",
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.montserrat(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        )
+                        QuickPlannerButton(
+                          text: 'iniciar sesión',
+                          onPressed: () {
+                            if (_formKey.currentState.validate()) {
+                              Scaffold.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Iniciando sesión..."),
+                                ),
+                              );
+                              signIn(_emailTextController.text,
+                                      _passwordTextController.text)
+                                  .then((user) async {
+                                user.admin = await isAdmin(user.uid);
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (BuildContext context) => Main(
+                                      user: user,
+                                    ),
+                                  ),
+                                );
+                              });
+                            }
+                          },
+                        ),
                       ],
                     ),
                   ),

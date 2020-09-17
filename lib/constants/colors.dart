@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class QuickPlannerColors {
+class QPColors {
   static const Color cognac = Color(0xffa24638);
   static const Color burnt_sienna = Color(0xffe86450);
   static const Color dark_salmon = Color(0xffeb996e);
