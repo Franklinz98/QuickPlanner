@@ -1,10 +1,19 @@
+import 'package:app/backend/requets.dart';
+import 'package:app/models/stock_item.dart';
 import 'package:app/models/units.dart';
 import 'package:app/widgets/button.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AddStockDialog extends StatefulWidget {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final CollectionReference stockReference;
+  final Function onStockAdded;
+
+  AddStockDialog(
+      {Key key, @required this.stockReference, @required this.onStockAdded})
+      : super(key: key);
 
   @override
   _DialogState createState() => _DialogState();
@@ -12,11 +21,14 @@ class AddStockDialog extends StatefulWidget {
 
 class _DialogState extends State<AddStockDialog> {
   QPUnit _selectedUnit;
+  TextEditingController _nameController, _neededController;
 
   @override
   void initState() {
     super.initState();
     _selectedUnit = QPUnit(1);
+    _nameController = TextEditingController();
+    _neededController = TextEditingController();
   }
 
   @override
@@ -70,6 +82,7 @@ class _DialogState extends State<AddStockDialog> {
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 8, horizontal: 12),
               ),
+              controller: _nameController,
               validator: (value) {
                 if (value.isEmpty) {
                   return 'Ingresa el nombre del proyecto';
@@ -100,6 +113,7 @@ class _DialogState extends State<AddStockDialog> {
                           EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                     ),
                     keyboardType: TextInputType.number,
+                    controller: _neededController,
                     validator: (value) {
                       if (value.isEmpty) {
                         return 'Ingresa la cantidad';
@@ -158,11 +172,24 @@ class _DialogState extends State<AddStockDialog> {
             QuickPlannerButton(
                 text: 'aceptar',
                 onPressed: () {
-                  if (widget._formKey.currentState.validate()) {}
+                  if (widget._formKey.currentState.validate()) {
+                    StockItem stockItem = StockItem(_nameController.text,
+                        _selectedUnit.name, int.parse(_neededController.text));
+                    addStockItem(widget.stockReference, stockItem)
+                        .then((value) => widget.onStockAdded.call(value));
+                    Navigator.of(context, rootNavigator: true).pop();
+                  }
                 }),
           ],
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _neededController.dispose();
+    super.dispose();
   }
 }

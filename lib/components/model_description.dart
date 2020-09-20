@@ -1,16 +1,17 @@
 import 'package:app/constants/colors.dart';
+import 'package:app/models/phase.dart';
 import 'package:app/models/project.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ProjectDescription extends StatelessWidget {
-  final Project project;
+  final model;
   final Brightness deviceBrightness;
   final String listTitle;
 
   const ProjectDescription({
     Key key,
-    @required this.project,
+    @required this.model,
     @required this.listTitle,
     @required this.deviceBrightness,
   }) : super(key: key);
@@ -36,7 +37,7 @@ class ProjectDescription extends StatelessWidget {
               ),
               Expanded(
                 child: Text(
-                  project.title,
+                  model.title,
                   style: TextStyle(
                     fontFamily: "Roboto",
                     fontSize: 16,
@@ -62,7 +63,9 @@ class ProjectDescription extends StatelessWidget {
             height: 12.0,
           ),
           Text(
-            project.description,
+            model.runtimeType == Project
+                ? model.description
+                : "Finalización estimada en ${model.eta} ${model.unit}",
             style: GoogleFonts.roboto(
               fontSize: 16,
               color: deviceBrightness == Brightness.dark

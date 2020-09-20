@@ -1,6 +1,7 @@
 import 'package:app/constants/enums.dart';
 import 'package:app/models/project.dart';
 import 'package:app/models/project_preview.dart';
+import 'package:app/models/stock_item.dart';
 import 'package:app/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -40,32 +41,53 @@ Stream<QuerySnapshot> getPhasesStream(DocumentReference project) {
   return stream;
 }
 
+Stream<QuerySnapshot> getStockStream(CollectionReference phase) {
+  Stream<QuerySnapshot> stream;
+  stream = phase.snapshots();
+  return stream;
+}
+
 Future<bool> createProject(Project project, QPUser user) async {
-  firestore.collection('data').add(project.toJson()).then((ref) {
+  try {
+    DocumentReference reference = await firestore
+        .collection('data')
+        .add(project.toJson())
+        .catchError(() {});
     ProjectPreview preview =
-        ProjectPreview(project.title, ref, QPState.onTrack, user.name);
-    firestore
+        ProjectPreview(project.title, reference, QPState.onTrack, user.name);
+    await firestore
         .collection('preview')
-        .doc(ref.id)
-        .set(preview.toJson())
-        .then((value) => firestore
-                .collection('users')
-                .doc(user.uid)
-                .collection('preview')
-                .doc(ref.id)
-                .set(preview.toJson())
-                .then((value) {
-              return true;
-            }).catchError((error) {
-              return false;
-            }))
-        .catchError((error) {
-      return false;
-    });
-  }).catchError((error) {
+        .doc(reference.id)
+        .set(preview.toJson());
+    await firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('preview')
+        .doc(reference.id)
+        .set(preview.toJson());
+    return true;
+  } catch (error) {
     return false;
-  });
-  return false;
+  }
+}
+
+Future<bool> addStockItem(
+    CollectionReference sotckReference, StockItem stockItem) async {
+  try {
+    await sotckReference.add(stockItem.toJson());
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+Future<bool> updateStock(StockItem stockItem) async {
+  try {
+    await stockItem.reference.update(stockItem.toJson());
+    return true;
+  } catch (error) {
+    return false;
+  }
 }
 
 Future<Project> getProjectData(DocumentReference reference) async {

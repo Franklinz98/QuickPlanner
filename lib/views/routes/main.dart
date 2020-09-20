@@ -1,8 +1,10 @@
 import 'package:app/backend/authentication.dart';
 import 'package:app/components/project_dialog.dart';
 import 'package:app/components/stock_dialog.dart';
-import 'package:app/models/project_preview.dart';
-import 'package:app/views/screens/main/project.dart';
+import 'package:app/constants/enums.dart';
+import 'package:app/models/phase.dart';
+import 'package:app/views/screens/main/phase_details.dart';
+import 'package:app/views/screens/main/project_details.dart';
 import 'package:app/widgets/drawer.dart';
 import 'package:app/constants/colors.dart';
 import 'package:app/models/user.dart';
@@ -26,35 +28,17 @@ class _MainState extends State<Main> {
   bool _fabVisibility;
   Widget _content;
   Function _addProject, _addPhase, _addStock, _contactUs, _fabAction;
+  DocumentReference _projectReference;
+  Phase _phaseObject;
+  MainScreen _screen;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
     initFabActions();
-    _content = Home(
-      user: widget.user,
-      openDrawer: () {
-        _scaffoldKey.currentState.openDrawer();
-      },
-      onPreviewTap: (DocumentReference projectReference) {
-        setState(() {
-          _content = ProjectDetails(
-              user: widget.user,
-              onBackPressed: () {
-                setState(() {
-                  _content = Home(
-                      user: widget.user,
-                      openDrawer: () {
-                        _scaffoldKey.currentState.openDrawer();
-                      },
-                      onPreviewTap: () {});
-                });
-              },
-              projectReference: projectReference);
-        });
-      },
-    );
+    _screen = MainScreen.home;
+    updateScreen();
   }
 
   @override
@@ -138,16 +122,27 @@ class _MainState extends State<Main> {
         ),
       );
     };
-    /* _addPhase = () {
-      showDialog(
+    _addPhase = () {
+      /* showDialog(
         context: context,
         builder: (_) => CreateProjectDialog(),
-      );
-    }; */
+      ); */
+    };
     _addStock = () {
       showDialog(
         context: context,
-        builder: (_) => AddStockDialog(),
+        builder: (_) => AddStockDialog(
+          stockReference: _phaseObject.stock,
+          onStockAdded: (result) {
+            String message;
+            if (result) {
+              message = 'Agregado.';
+            } else {
+              message = 'No se pudo agregar, vuelve a intentarlo.';
+            }
+            Scaffold.of(context).showSnackBar(SnackBar(content: Text(message)));
+          },
+        ),
       );
     };
     _contactUs = () async {
@@ -162,5 +157,63 @@ class _MainState extends State<Main> {
         );
     };
     _fabAction = _addProject;
+  }
+
+  updateScreen({DocumentReference documentReference, Phase phaseObject}) {
+    _projectReference = documentReference ?? _projectReference;
+    _phaseObject = phaseObject ?? _phaseObject;
+    switch (_screen) {
+      case MainScreen.home:
+        _fabAction = _addProject;
+        _content = Home(
+            user: widget.user,
+            openDrawer: () {
+              _scaffoldKey.currentState.openDrawer();
+            },
+            onPreviewTap: (DocumentReference projectReference) {
+              _screen = MainScreen.project;
+              setState(() {
+                updateScreen(documentReference: projectReference);
+              });
+            });
+        break;
+      case MainScreen.project:
+        _fabAction = widget.user.admin ? _addPhase : _contactUs;
+        _content = ProjectDetails(
+          user: widget.user,
+          projectReference: _projectReference,
+          onBackPressed: () {
+            _screen = MainScreen.home;
+            setState(() {
+              updateScreen();
+            });
+          },
+          onPhasePressed: (Phase phase) {
+            _screen = MainScreen.phase;
+            setState(() {
+              updateScreen(phaseObject: phase);
+            });
+          },
+        );
+        break;
+      case MainScreen.phase:
+        _fabAction = widget.user.admin ? _addStock : _contactUs;
+        _content = PhaseDetails(
+          user: widget.user,
+          onBackPressed: () {
+            _screen =
+                _phaseObject != null ? MainScreen.project : MainScreen.home;
+            setState(() {
+              updateScreen();
+            });
+          },
+          phase: _phaseObject,
+          onStockPressed: () {},
+        );
+        break;
+      case MainScreen.phaseAdd:
+        // Phase addition screen
+        break;
+    }
   }
 }
