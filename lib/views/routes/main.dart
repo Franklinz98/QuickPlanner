@@ -1,12 +1,14 @@
 import 'package:app/backend/authentication.dart';
-import 'package:app/backend/requets.dart';
 import 'package:app/components/project_dialog.dart';
 import 'package:app/components/stock_dialog.dart';
+import 'package:app/models/project_preview.dart';
+import 'package:app/views/screens/main/project.dart';
 import 'package:app/widgets/drawer.dart';
 import 'package:app/constants/colors.dart';
 import 'package:app/models/user.dart';
 import 'package:app/views/routes/authentication.dart';
 import 'package:app/views/screens/main/home.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -34,6 +36,23 @@ class _MainState extends State<Main> {
       user: widget.user,
       openDrawer: () {
         _scaffoldKey.currentState.openDrawer();
+      },
+      onPreviewTap: (DocumentReference projectReference) {
+        setState(() {
+          _content = ProjectDetails(
+              user: widget.user,
+              onBackPressed: () {
+                setState(() {
+                  _content = Home(
+                      user: widget.user,
+                      openDrawer: () {
+                        _scaffoldKey.currentState.openDrawer();
+                      },
+                      onPreviewTap: () {});
+                });
+              },
+              projectReference: projectReference);
+        });
       },
     );
   }

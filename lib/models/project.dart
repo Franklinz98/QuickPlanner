@@ -10,15 +10,9 @@ class Project {
   }
 
   factory Project.fromJson(Map<String, dynamic> json) {
-    List<dynamic> phasesJson = json['phases'];
-    List<Phase> phases = List();
-    phasesJson.forEach((element) {
-      phases.add(Phase.fromJson(element));
-    });
     return Project(
       json['title'],
       json['description'],
-      phases: phases,
     );
   }
 

@@ -1,6 +1,10 @@
 import 'package:app/backend/requets.dart';
+import 'package:app/components/no_items.dart';
 import 'package:app/components/no_projects.dart';
+import 'package:app/components/project_description.dart';
 import 'package:app/constants/colors.dart';
+import 'package:app/models/phase.dart';
+import 'package:app/models/project.dart';
 import 'package:app/models/project_preview.dart';
 import 'package:app/models/user.dart';
 import 'package:app/widgets/list_tile.dart';
@@ -8,33 +12,33 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class Home extends StatefulWidget {
-  final Function openDrawer;
+class ProjectDetails extends StatefulWidget {
+  final Function onBackPressed;
   final QPUser user;
-  final Function onPreviewTap;
+  final DocumentReference projectReference;
 
-  const Home({
+  const ProjectDetails({
     Key key,
     @required this.user,
-    @required this.openDrawer,
-    @required this.onPreviewTap,
+    @required this.onBackPressed,
+    @required this.projectReference,
   }) : super(key: key);
 
   @override
-  _HomeState createState() => _HomeState();
+  _ProjectState createState() => _ProjectState();
 }
 
-class _HomeState extends State<Home> with WidgetsBindingObserver {
+class _ProjectState extends State<ProjectDetails> with WidgetsBindingObserver {
   Brightness _brightnessValue;
-  Future<List<ProjectPreview>> _futureProjects;
-  Stream<QuerySnapshot> _streamProjects;
+  Stream<QuerySnapshot> _phasesStream;
+  Future<Project> _projectFuture;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // _futureProjects = getProjectsFuture(widget.user);
-    _streamProjects = getProjectsStream(widget.user);
+    _projectFuture = getProjectData(widget.projectReference);
+    _phasesStream = getPhasesStream(widget.projectReference);
   }
 
   @override
@@ -49,7 +53,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             alignment: Alignment.center,
             children: [
               Text(
-                "Proyectos",
+                "Detalles del proyecto",
                 textAlign: TextAlign.center,
                 style: GoogleFonts.montserrat(
                   fontWeight: FontWeight.w600,
@@ -59,15 +63,18 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
-                  icon: Icon(Icons.menu),
-                  onPressed: () => widget.openDrawer.call(),
+                  icon: Icon(Icons.arrow_back),
+                  onPressed: () => widget.onBackPressed.call(),
                 ),
               )
             ],
           ),
         ),
+        SizedBox(
+          height: 32.0,
+        ),
         Expanded(
-          child: _getStreamBuilder(),
+          child: _getFutureBuilder(),
         ),
       ],
     );
@@ -75,7 +82,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
   StreamBuilder _getStreamBuilder() {
     return StreamBuilder<QuerySnapshot>(
-      stream: _streamProjects,
+      stream: _phasesStream,
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.hasError) {
           Scaffold.of(context)
@@ -95,51 +102,40 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           return ListView.builder(
             padding: EdgeInsets.all(16.0),
             itemBuilder: (_, index) {
-              ProjectPreview projectPreview =
-                  ProjectPreview.fromJson(documents[index].data());
+              QueryDocumentSnapshot documentSnapshot = documents[index];
+              Phase phase = Phase.fromJson(documentSnapshot.data());
+              phase.stock = documentSnapshot.reference.collection('stock');
               return QPListTile(
-                title: projectPreview.title,
-                subtitle: widget.user.admin
-                    ? projectPreview.owner
-                    : 'Capítulo: ${projectPreview.phase}',
-                state: projectPreview.state,
-                subtitleInitial: widget.user.admin,
+                title: phase.title,
+                subtitle: 'Estimado: ${phase.eta} ${phase.unit}',
+                state: phase.state,
                 deviceBrightness: _brightnessValue,
-                onTap: () {
-                  widget.onPreviewTap.call(projectPreview.reference);
-                },
+                onTap: () {},
               );
             },
             itemCount: documents.length,
           );
         }
-        return NoProjectsImage(deviceBrightness: _brightnessValue);
+        return NoItemsImage(deviceBrightness: _brightnessValue);
       },
     );
   }
 
   FutureBuilder _getFutureBuilder() {
-    return FutureBuilder<List<ProjectPreview>>(
-      future: _futureProjects,
-      builder:
-          (BuildContext context, AsyncSnapshot<List<ProjectPreview>> snapshot) {
+    return FutureBuilder<Project>(
+      future: _projectFuture,
+      builder: (BuildContext context, AsyncSnapshot<Project> snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.hasData) {
-            ListView.builder(
-              padding: EdgeInsets.all(16.0),
-              itemBuilder: (_, index) {
-                ProjectPreview projectPreview = snapshot.data[index];
-                return QPListTile(
-                  title: projectPreview.title,
-                  subtitle: widget.user.admin
-                      ? projectPreview.owner
-                      : 'Capítulo: ${projectPreview.phase}',
-                  state: projectPreview.state,
-                  deviceBrightness: _brightnessValue,
-                  onTap: () {},
-                );
-              },
-              itemCount: snapshot.data.length,
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ProjectDescription(
+                    project: snapshot.data, listTitle: 'Capítulos:', deviceBrightness: _brightnessValue),
+                Expanded(
+                  child: _getStreamBuilder(),
+                ),
+              ],
             );
           } else if (snapshot.hasError) {
             Scaffold.of(context).showSnackBar(SnackBar(

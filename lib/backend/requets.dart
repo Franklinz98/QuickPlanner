@@ -3,22 +3,21 @@ import 'package:app/models/project.dart';
 import 'package:app/models/project_preview.dart';
 import 'package:app/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
 
 final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
 Future<List<ProjectPreview>> getProjectsFuture(QPUser user) async {
-  List<ProjectPreview> projects = List();
+  List<ProjectPreview> projectsPreview = List();
   QuerySnapshot userSnapshot;
   userSnapshot = await firestore
       .collection('users')
       .doc(user.uid)
       .collection('preview')
       .get();
-  userSnapshot.docs.forEach((document) {
-    projects.add(ProjectPreview.fromJson(document.data()));
+  userSnapshot.docs.forEach((previewSnapshot) {
+    projectsPreview.add(ProjectPreview.fromJson(previewSnapshot.data()));
   });
-  return projects;
+  return projectsPreview;
 }
 
 Stream<QuerySnapshot> getProjectsStream(QPUser user) {
@@ -32,6 +31,12 @@ Stream<QuerySnapshot> getProjectsStream(QPUser user) {
         .collection('preview')
         .snapshots();
   }
+  return stream;
+}
+
+Stream<QuerySnapshot> getPhasesStream(DocumentReference project) {
+  Stream<QuerySnapshot> stream;
+  stream = project.collection('phases').snapshots();
   return stream;
 }
 
@@ -61,4 +66,10 @@ Future<bool> createProject(Project project, QPUser user) async {
     return false;
   });
   return false;
+}
+
+Future<Project> getProjectData(DocumentReference reference) async {
+  DocumentSnapshot projectSnapshot = await reference.get();
+  Project project = Project.fromJson(projectSnapshot.data());
+  return project;
 }

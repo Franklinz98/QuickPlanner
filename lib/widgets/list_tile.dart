@@ -1,6 +1,5 @@
 import 'package:app/constants/colors.dart';
 import 'package:app/constants/enums.dart';
-import 'package:app/models/project_preview.dart';
 import 'package:app/widgets/profile_letter.dart';
 import 'package:flutter/cupertino.dart';
 

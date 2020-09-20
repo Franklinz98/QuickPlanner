@@ -1,22 +1,16 @@
 import 'package:app/constants/enums.dart';
 import 'package:app/models/stock_item.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Phase {
   final String title, unit;
   final int eta;
-  List<StockItem> stock;
+  CollectionReference stock;
   QPState state;
 
-  Phase(this.title, this.unit, this.eta, this.state, {this.stock}) {
-    this.stock ??= List();
-  }
+  Phase(this.title, this.unit, this.eta, this.state, {this.stock});
 
   factory Phase.fromJson(Map<String, dynamic> json) {
-    List<dynamic> stockJson = json['stock'];
-    List<StockItem> stock = List();
-    stockJson.forEach((element) {
-      stock.add(StockItem.fromJson(element));
-    });
     QPState state;
     switch (json['state']) {
       case 'finished':
@@ -34,21 +28,15 @@ class Phase {
       json['unit'],
       json['eta'],
       state,
-      stock: stock,
     );
   }
 
   Map<String, dynamic> toJson() {
-    List<Map<String, dynamic>> stockJson = List();
-    this.stock.forEach((stockItem) {
-      stockJson.add(stockItem.toJson());
-    });
     return {
       'title': this.title,
       'unit': this.unit,
       'eta': this.eta,
       'state': _stateToString(this.state),
-      'stock': stockJson,
     };
   }
 
