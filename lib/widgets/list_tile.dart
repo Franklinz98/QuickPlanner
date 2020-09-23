@@ -44,8 +44,8 @@ class QPListTile extends StatelessWidget {
         child: ListTile(
           leading: ProfileLetter(
               letter: subtitleInitial
-                  ? subtitle.substring(0, 1)
-                  : title.substring(0, 1),
+                  ? subtitle.substring(0, 1).toUpperCase()
+                  : title.substring(0, 1).toUpperCase(),
               style: GoogleFonts.roboto(
                 fontSize: 24,
                 color: Colors.white,

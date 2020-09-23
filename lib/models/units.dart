@@ -28,3 +28,25 @@ class QPUnit {
     }
   }
 }
+
+class QPTimeUnit {
+  String name;
+  int value;
+
+  QPTimeUnit(this.value) {
+    switch (value) {
+      case 1:
+        this.name = 'días';
+        break;
+      case 2:
+        this.name = 'semanas';
+        break;
+      case 3:
+        this.name = 'meses';
+        break;
+      case 4:
+        this.name = 'años';
+        break;
+    }
+  }
+}

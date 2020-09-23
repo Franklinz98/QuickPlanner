@@ -5,10 +5,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Phase {
   final String title, unit;
   final int eta;
-  CollectionReference stock;
+  DocumentReference reference;
   QPState state;
 
-  Phase(this.title, this.unit, this.eta, this.state, {this.stock});
+  Phase(this.title, this.unit, this.eta, this.state, {this.reference});
 
   factory Phase.fromJson(Map<String, dynamic> json) {
     QPState state;

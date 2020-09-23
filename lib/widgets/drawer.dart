@@ -4,20 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class CustomDrawer extends StatelessWidget {
-  final profile;
   final termsAndCond;
   final privacyPolicy;
-  final licences;
   final onLogOff;
   final QPUser user;
 
   const CustomDrawer(
       {Key key,
       @required this.user,
-      @required this.profile,
       @required this.termsAndCond,
       @required this.privacyPolicy,
-      @required this.licences,
       @required this.onLogOff})
       : super(key: key);
 
@@ -71,17 +67,6 @@ class CustomDrawer extends StatelessWidget {
                   fontSize: 13,
                 ),
               ),
-              ListTile(
-                  title: Text(
-                    "Editar Perfil",
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.montserrat(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                  ),
-                  dense: true,
-                  onTap: this.profile),
               Spacer(),
               ListTile(
                   title: Text(
@@ -105,17 +90,6 @@ class CustomDrawer extends StatelessWidget {
                   ),
                   dense: true,
                   onTap: this.privacyPolicy),
-              ListTile(
-                  title: Text(
-                    "Licencias y Bibliotecas",
-                    style: TextStyle(
-                      fontFamily: "Roboto",
-                      fontWeight: FontWeight.w400,
-                      fontSize: 14,
-                    ),
-                  ),
-                  dense: true,
-                  onTap: this.licences),
               Spacer(),
               ListTile(
                   title: Text(

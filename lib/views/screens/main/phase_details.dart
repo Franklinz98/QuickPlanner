@@ -16,7 +16,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 class PhaseDetails extends StatefulWidget {
   final Function onBackPressed;
-  final Function onStockPressed;
   final QPUser user;
   final Phase phase;
 
@@ -24,7 +23,6 @@ class PhaseDetails extends StatefulWidget {
     Key key,
     @required this.user,
     @required this.onBackPressed,
-    @required this.onStockPressed,
     @required this.phase,
   }) : super(key: key);
 
@@ -40,7 +38,7 @@ class _PhasetState extends State<PhaseDetails> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _stockStream = getStockStream(widget.phase.stock);
+    _stockStream = getStockStream(widget.phase.reference.collection('stock'));
   }
 
   @override
@@ -116,25 +114,28 @@ class _PhasetState extends State<PhaseDetails> with WidgetsBindingObserver {
                 title: stock.title,
                 subtitle: 'Existencias: ${stock.stock} ${stock.unit}',
                 deviceBrightness: _brightnessValue,
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => UpdateStockDialog(
-                      onUpdatedItem: (result) {
-                        String message;
-                        if (result) {
-                          message = 'Agregado.';
-                        } else {
-                          message = 'No se pudo agregar, vuelve a intentarlo.';
-                        }
-                        Scaffold.of(context)
-                            .showSnackBar(SnackBar(content: Text(message)));
-                      },
-                      stockItem: stock,
-                      deviceBrightness: _brightnessValue,
-                    ),
-                  );
-                },
+                onTap: !widget.user.admin
+                    ? () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => UpdateStockDialog(
+                            onUpdatedItem: (result) {
+                              String message;
+                              if (result) {
+                                message = 'Agregado.';
+                              } else {
+                                message =
+                                    'No se pudo agregar, vuelve a intentarlo.';
+                              }
+                              Scaffold.of(context).showSnackBar(
+                                  SnackBar(content: Text(message)));
+                            },
+                            stockItem: stock,
+                            deviceBrightness: _brightnessValue,
+                          ),
+                        );
+                      }
+                    : null,
               );
             },
             itemCount: documents.length,

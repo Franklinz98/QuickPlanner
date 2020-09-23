@@ -12,7 +12,9 @@ class AddStockDialog extends StatefulWidget {
   final Function onStockAdded;
 
   AddStockDialog(
-      {Key key, @required this.stockReference, @required this.onStockAdded})
+      {Key key,
+      @required this.stockReference,
+      @required this.onStockAdded})
       : super(key: key);
 
   @override

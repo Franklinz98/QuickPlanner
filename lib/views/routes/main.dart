@@ -1,10 +1,15 @@
 import 'package:app/backend/authentication.dart';
+import 'package:app/backend/requets.dart';
 import 'package:app/components/project_dialog.dart';
 import 'package:app/components/stock_dialog.dart';
 import 'package:app/constants/enums.dart';
 import 'package:app/models/phase.dart';
+import 'package:app/models/project.dart';
+import 'package:app/views/screens/main/add_phase.dart';
 import 'package:app/views/screens/main/phase_details.dart';
 import 'package:app/views/screens/main/project_details.dart';
+import 'package:app/views/screens/policies/privacy_policy.dart';
+import 'package:app/views/screens/policies/terms_cond.dart';
 import 'package:app/widgets/drawer.dart';
 import 'package:app/constants/colors.dart';
 import 'package:app/models/user.dart';
@@ -25,11 +30,12 @@ class Main extends StatefulWidget {
 
 class _MainState extends State<Main> {
   Brightness _brightnessValue;
-  bool _fabVisibility;
+  bool _fabVisibility, _unfinishedPhases;
   Widget _content;
   Function _addProject, _addPhase, _addStock, _contactUs, _fabAction;
-  DocumentReference _projectReference;
+  DocumentReference _projectReference, _phaseReference;
   Phase _phaseObject;
+  Project _projectObject;
   MainScreen _screen;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -52,17 +58,23 @@ class _MainState extends State<Main> {
       ),
       drawer: CustomDrawer(
           user: widget.user,
-          profile: () {
-            // show Profile
-          },
           termsAndCond: () {
-            // show T&C
+            _screen = MainScreen.tc;
+            setState(() {
+              updateScreen();
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _scaffoldKey.currentState.openEndDrawer();
+              });
+            });
           },
           privacyPolicy: () {
-            // show PP
-          },
-          licences: () {
-            // show Libraries and Licenses
+            _screen = MainScreen.pp;
+            setState(() {
+              updateScreen();
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _scaffoldKey.currentState.openEndDrawer();
+              });
+            });
           },
           onLogOff: () {
             signOut().then((value) {
@@ -85,6 +97,9 @@ class _MainState extends State<Main> {
     if (widget.user.admin) {
       _fabVisibility = _content.runtimeType != Home;
       iconData = Icons.add;
+    } else if (_screen == MainScreen.pp || _screen == MainScreen.tc) {
+      _fabVisibility = false;
+      iconData = Icons.add;
     } else {
       _fabVisibility = true;
       iconData =
@@ -102,6 +117,18 @@ class _MainState extends State<Main> {
         onPressed: _fabAction,
       ),
     );
+  }
+
+  resetPhasesState() {
+    _unfinishedPhases = false;
+  }
+
+  updatePhasesState(bool value) {
+    _unfinishedPhases |= value;
+  }
+
+  updateProjectObject(Project project) {
+    _projectObject = project;
   }
 
   initFabActions() {
@@ -123,16 +150,29 @@ class _MainState extends State<Main> {
       );
     };
     _addPhase = () {
-      /* showDialog(
-        context: context,
-        builder: (_) => CreateProjectDialog(),
-      ); */
+      print("object");
+      if (!_unfinishedPhases) {
+        createPhase(_projectObject.reference, _projectObject.phasesQuantity)
+            .then((value) {
+          _phaseReference = value;
+          _screen = MainScreen.phaseAdd;
+          setState(() {
+            updateScreen();
+          });
+        });
+      } else {
+        _scaffoldKey.currentState.showSnackBar(SnackBar(
+            content: Text(
+                'Debes finalizar todos los capítulos para agregar uno nuevo.')));
+      }
     };
     _addStock = () {
       showDialog(
         context: context,
         builder: (_) => AddStockDialog(
-          stockReference: _phaseObject.stock,
+          stockReference: _screen == MainScreen.phase
+              ? _phaseObject.reference.collection('stock')
+              : _phaseReference.collection('stock'),
           onStockAdded: (result) {
             String message;
             if (result) {
@@ -179,9 +219,15 @@ class _MainState extends State<Main> {
         break;
       case MainScreen.project:
         _fabAction = widget.user.admin ? _addPhase : _contactUs;
+        _unfinishedPhases = false;
         _content = ProjectDetails(
           user: widget.user,
           projectReference: _projectReference,
+          updateObject: (Project project) {
+            updateProjectObject(project);
+          },
+          unfinishedReset: resetPhasesState,
+          unfinishedUpdate: updatePhasesState,
           onBackPressed: () {
             _screen = MainScreen.home;
             setState(() {
@@ -208,11 +254,44 @@ class _MainState extends State<Main> {
             });
           },
           phase: _phaseObject,
-          onStockPressed: () {},
         );
         break;
       case MainScreen.phaseAdd:
-        // Phase addition screen
+        _fabAction = _addStock;
+        _content = AddPhase(
+          user: widget.user,
+          id: _projectObject.phasesQuantity,
+          projectReference: _projectReference,
+          phaseReference: _phaseReference,
+          onBackPressed: () {
+            _screen = _projectReference != null
+                ? MainScreen.project
+                : MainScreen.home;
+            setState(() {
+              updateScreen();
+            });
+          },
+        );
+        break;
+      case MainScreen.pp:
+        _content = PrivacyPolicy(
+          onBackPressed: () {
+            _screen = MainScreen.home;
+            setState(() {
+              updateScreen();
+            });
+          },
+        );
+        break;
+      case MainScreen.tc:
+        _content = TermsCond(
+          onBackPressed: () {
+            _screen = MainScreen.home;
+            setState(() {
+              updateScreen();
+            });
+          },
+        );
         break;
     }
   }
