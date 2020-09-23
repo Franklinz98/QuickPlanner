@@ -42,6 +42,17 @@ Future<bool> createProject(Project project, QPUser user) async {
   }
 }
 
+Future<void> updateState(bool hasWarning, DocumentReference projectReference,
+    DocumentReference phaseReference) async {
+  try {
+    var map = {
+      'state': hasWarning ? 'withProblems' : 'onTrack',
+    };
+    await phaseReference.update(map);
+    await firestore.collection('preview').doc(projectReference.id).update(map);
+  } catch (e) {}
+}
+
 Future<bool> addStockItem(
     CollectionReference sotckReference, StockItem stockItem) async {
   try {

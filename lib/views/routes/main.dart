@@ -5,6 +5,7 @@ import 'package:app/components/stock_dialog.dart';
 import 'package:app/constants/enums.dart';
 import 'package:app/models/phase.dart';
 import 'package:app/models/project.dart';
+import 'package:app/provider/provider.dart';
 import 'package:app/views/screens/main/add_phase.dart';
 import 'package:app/views/screens/main/phase_details.dart';
 import 'package:app/views/screens/main/project_details.dart';
@@ -17,6 +18,7 @@ import 'package:app/views/routes/authentication.dart';
 import 'package:app/views/screens/main/home.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class Main extends StatefulWidget {
@@ -30,12 +32,9 @@ class Main extends StatefulWidget {
 
 class _MainState extends State<Main> {
   Brightness _brightnessValue;
-  bool _fabVisibility, _unfinishedPhases;
+  bool _fabVisibility;
   Widget _content;
   Function _addProject, _addPhase, _addStock, _contactUs, _fabAction;
-  DocumentReference _projectReference, _phaseReference;
-  Phase _phaseObject;
-  Project _projectObject;
   MainScreen _screen;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -94,11 +93,11 @@ class _MainState extends State<Main> {
 
   Visibility fabUpdate() {
     IconData iconData;
-    if (widget.user.admin) {
-      _fabVisibility = _content.runtimeType != Home;
-      iconData = Icons.add;
-    } else if (_screen == MainScreen.pp || _screen == MainScreen.tc) {
+    if (_screen == MainScreen.pp || _screen == MainScreen.tc) {
       _fabVisibility = false;
+      iconData = Icons.add;
+    } else if (widget.user.admin) {
+      _fabVisibility = _content.runtimeType != Home;
       iconData = Icons.add;
     } else {
       _fabVisibility = true;
@@ -119,18 +118,6 @@ class _MainState extends State<Main> {
     );
   }
 
-  resetPhasesState() {
-    _unfinishedPhases = false;
-  }
-
-  updatePhasesState(bool value) {
-    _unfinishedPhases |= value;
-  }
-
-  updateProjectObject(Project project) {
-    _projectObject = project;
-  }
-
   initFabActions() {
     _addProject = () {
       showDialog(
@@ -144,17 +131,19 @@ class _MainState extends State<Main> {
             } else {
               message = 'No se pudo crear el proyecto, vuelve a intentarlo.';
             }
-            Scaffold.of(context).showSnackBar(SnackBar(content: Text(message)));
+            _scaffoldKey.currentState
+                .showSnackBar(SnackBar(content: Text(message)));
           },
         ),
       );
     };
     _addPhase = () {
-      print("object");
-      if (!_unfinishedPhases) {
-        createPhase(_projectObject.reference, _projectObject.phasesQuantity)
-            .then((value) {
-          _phaseReference = value;
+      if (!Provider.of<QuickPlannerModel>(context, listen: false).phasesState) {
+        Project project =
+            Provider.of<QuickPlannerModel>(context, listen: false).project;
+        createPhase(project.reference, project.phasesQuantity).then((value) {
+          Provider.of<QuickPlannerModel>(context, listen: false)
+              .updatePhaseReference(value);
           _screen = MainScreen.phaseAdd;
           setState(() {
             updateScreen();
@@ -171,8 +160,13 @@ class _MainState extends State<Main> {
         context: context,
         builder: (_) => AddStockDialog(
           stockReference: _screen == MainScreen.phase
-              ? _phaseObject.reference.collection('stock')
-              : _phaseReference.collection('stock'),
+              ? Provider.of<QuickPlannerModel>(context, listen: false)
+                  .phase
+                  .reference
+                  .collection('stock')
+              : Provider.of<QuickPlannerModel>(context, listen: false)
+                  .phaseRef
+                  .collection('stock'),
           onStockAdded: (result) {
             String message;
             if (result) {
@@ -180,17 +174,18 @@ class _MainState extends State<Main> {
             } else {
               message = 'No se pudo agregar, vuelve a intentarlo.';
             }
-            Scaffold.of(context).showSnackBar(SnackBar(content: Text(message)));
+            _scaffoldKey.currentState
+                .showSnackBar(SnackBar(content: Text(message)));
           },
         ),
       );
     };
     _contactUs = () async {
-      const url = "https://wa.me/573112148873";
+      const url = "https://wa.me/573017075745";
       if (await canLaunch(url))
         launch(url);
       else
-        Scaffold.of(context).showSnackBar(
+        _scaffoldKey.currentState.showSnackBar(
           SnackBar(
             content: Text("No podemos completar está acción"),
           ),
@@ -199,9 +194,7 @@ class _MainState extends State<Main> {
     _fabAction = _addProject;
   }
 
-  updateScreen({DocumentReference documentReference, Phase phaseObject}) {
-    _projectReference = documentReference ?? _projectReference;
-    _phaseObject = phaseObject ?? _phaseObject;
+  updateScreen() {
     switch (_screen) {
       case MainScreen.home:
         _fabAction = _addProject;
@@ -211,23 +204,20 @@ class _MainState extends State<Main> {
               _scaffoldKey.currentState.openDrawer();
             },
             onPreviewTap: (DocumentReference projectReference) {
+              Provider.of<QuickPlannerModel>(context, listen: false)
+                  .updateProjectReferece(projectReference);
               _screen = MainScreen.project;
               setState(() {
-                updateScreen(documentReference: projectReference);
+                updateScreen();
               });
             });
         break;
       case MainScreen.project:
         _fabAction = widget.user.admin ? _addPhase : _contactUs;
-        _unfinishedPhases = false;
         _content = ProjectDetails(
           user: widget.user,
-          projectReference: _projectReference,
-          updateObject: (Project project) {
-            updateProjectObject(project);
-          },
-          unfinishedReset: resetPhasesState,
-          unfinishedUpdate: updatePhasesState,
+          projectReference:
+              Provider.of<QuickPlannerModel>(context, listen: false).projectRef,
           onBackPressed: () {
             _screen = MainScreen.home;
             setState(() {
@@ -235,9 +225,11 @@ class _MainState extends State<Main> {
             });
           },
           onPhasePressed: (Phase phase) {
+            Provider.of<QuickPlannerModel>(context, listen: false)
+                .updatePhase(phase);
             _screen = MainScreen.phase;
             setState(() {
-              updateScreen(phaseObject: phase);
+              updateScreen();
             });
           },
         );
@@ -247,26 +239,22 @@ class _MainState extends State<Main> {
         _content = PhaseDetails(
           user: widget.user,
           onBackPressed: () {
-            _screen =
-                _phaseObject != null ? MainScreen.project : MainScreen.home;
+            _screen = MainScreen.project;
             setState(() {
               updateScreen();
             });
           },
-          phase: _phaseObject,
         );
         break;
       case MainScreen.phaseAdd:
         _fabAction = _addStock;
         _content = AddPhase(
           user: widget.user,
-          id: _projectObject.phasesQuantity,
-          projectReference: _projectReference,
-          phaseReference: _phaseReference,
+          id: Provider.of<QuickPlannerModel>(context, listen: false)
+              .project
+              .phasesQuantity,
           onBackPressed: () {
-            _screen = _projectReference != null
-                ? MainScreen.project
-                : MainScreen.home;
+            _screen = MainScreen.project;
             setState(() {
               updateScreen();
             });

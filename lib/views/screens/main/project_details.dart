@@ -7,27 +7,25 @@ import 'package:app/constants/colors.dart';
 import 'package:app/constants/enums.dart';
 import 'package:app/models/phase.dart';
 import 'package:app/models/project.dart';
-import 'package:app/models/project_preview.dart';
 import 'package:app/models/user.dart';
+import 'package:app/provider/provider.dart';
 import 'package:app/widgets/list_tile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 class ProjectDetails extends StatefulWidget {
-  final Function onBackPressed, updateObject;
+  final Function onBackPressed;
   final QPUser user;
   final DocumentReference projectReference;
-  final Function onPhasePressed, unfinishedReset, unfinishedUpdate;
+  final Function onPhasePressed;
 
   const ProjectDetails({
     Key key,
     @required this.user,
-    @required this.updateObject,
     @required this.projectReference,
     @required this.onPhasePressed,
-    @required this.unfinishedReset,
-    @required this.unfinishedUpdate,
     @required this.onBackPressed,
   }) : super(key: key);
 
@@ -106,7 +104,8 @@ class _ProjectState extends State<ProjectDetails> with WidgetsBindingObserver {
         }
 
         if (snapshot.hasData && snapshot.data.docs.isNotEmpty) {
-          widget.unfinishedReset.call();
+          Provider.of<QuickPlannerModel>(context, listen: false)
+              .resetPhasesState();
           List<QueryDocumentSnapshot> documents = snapshot.data.docs;
           return ListView.builder(
             padding: EdgeInsets.all(16.0),
@@ -117,7 +116,8 @@ class _ProjectState extends State<ProjectDetails> with WidgetsBindingObserver {
               phase = phase.title == null
                   ? Phase(" ", " ", 0, QPState.onTrack)
                   : phase;
-              widget.unfinishedUpdate.call(phase.state != QPState.finished);
+              Provider.of<QuickPlannerModel>(context, listen: false)
+                  .updatePhasesState(phase.state != QPState.finished);
               return QPListTile(
                 title: phase.title,
                 subtitle: 'Estimado: ${phase.eta} ${phase.unit}',
@@ -170,7 +170,8 @@ class _ProjectState extends State<ProjectDetails> with WidgetsBindingObserver {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.hasData) {
             snapshot.data.reference = widget.projectReference;
-            widget.updateObject.call(snapshot.data);
+            Provider.of<QuickPlannerModel>(context, listen: false)
+                .updateProject(snapshot.data);
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

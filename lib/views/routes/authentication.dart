@@ -1,5 +1,6 @@
 import 'package:app/backend/authentication.dart';
 import 'package:app/constants/enums.dart';
+import 'package:app/provider/provider.dart';
 import 'package:app/views/routes/main.dart';
 import 'package:app/views/screens/auth/forgotten_password.dart';
 import 'package:app/views/screens/auth/login.dart';
@@ -7,6 +8,7 @@ import 'package:app/views/screens/auth/signup.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class Authentication extends StatefulWidget {
   @override
@@ -29,8 +31,12 @@ class _AuthState extends State<Authentication> with WidgetsBindingObserver {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (BuildContext context) => Main(
-                user: user,
+              builder: (BuildContext context) =>
+                  ChangeNotifierProvider<QuickPlannerModel>(
+                create: (context) => QuickPlannerModel(),
+                child: Main(
+                  user: user,
+                ),
               ),
             ),
           );

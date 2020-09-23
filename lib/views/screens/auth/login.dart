@@ -1,9 +1,11 @@
 import 'package:app/backend/authentication.dart';
 import 'package:app/constants/colors.dart';
+import 'package:app/provider/provider.dart';
 import 'package:app/views/routes/main.dart';
 import 'package:app/widgets/button.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 class Login extends StatefulWidget {
   final Brightness deviceBrightness;
@@ -168,11 +170,17 @@ class _LoginState extends State<Login> with WidgetsBindingObserver {
                                       _passwordTextController.text)
                                   .then((user) async {
                                 user.admin = await isAdmin(user.uid);
+
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (BuildContext context) => Main(
-                                      user: user,
+                                    builder: (BuildContext context) =>
+                                        ChangeNotifierProvider<
+                                            QuickPlannerModel>(
+                                      create: (context) => QuickPlannerModel(),
+                                      child: Main(
+                                        user: user,
+                                      ),
                                     ),
                                   ),
                                 );

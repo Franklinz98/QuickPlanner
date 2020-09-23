@@ -6,24 +6,23 @@ import 'package:app/models/phase.dart';
 import 'package:app/models/stock_item.dart';
 import 'package:app/models/units.dart';
 import 'package:app/models/user.dart';
+import 'package:app/provider/provider.dart';
 import 'package:app/widgets/list_tile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 class AddPhase extends StatefulWidget {
   final Function onBackPressed;
   final QPUser user;
   final int id;
-  final DocumentReference phaseReference, projectReference;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   AddPhase({
     Key key,
     @required this.user,
     @required this.id,
-    @required this.projectReference,
-    @required this.phaseReference,
     @required this.onBackPressed,
   }) : super(key: key);
 
@@ -44,7 +43,8 @@ class _ViewState extends State<AddPhase> with WidgetsBindingObserver {
     _nameController = TextEditingController();
     _etaController = TextEditingController();
     WidgetsBinding.instance.addObserver(this);
-    _stockStream = getStockStream(widget.phaseReference.collection('stock'));
+    _stockStream = getStockStream(
+        Provider.of<QuickPlannerModel>(context,listen: false).phaseRef.collection('stock'));
   }
 
   @override
@@ -71,7 +71,9 @@ class _ViewState extends State<AddPhase> with WidgetsBindingObserver {
                 child: IconButton(
                   icon: Icon(Icons.close),
                   onPressed: () {
-                    cancelPhaseCreation(widget.phaseReference).then((value) {
+                    cancelPhaseCreation(
+                            Provider.of<QuickPlannerModel>(context,listen: false).phaseRef)
+                        .then((value) {
                       if (value) {
                         widget.onBackPressed.call();
                       }
@@ -91,8 +93,12 @@ class _ViewState extends State<AddPhase> with WidgetsBindingObserver {
                           int.parse(_etaController.text),
                           QPState.onTrack);
 
-                      confirmPhaseCreation(widget.projectReference,
-                              widget.id+1, widget.phaseReference, phase)
+                      confirmPhaseCreation(
+                              Provider.of<QuickPlannerModel>(context,listen: false)
+                                  .projectRef,
+                              widget.id + 1,
+                              Provider.of<QuickPlannerModel>(context,listen: false).phaseRef,
+                              phase)
                           .then((value) {
                         if (value) {
                           widget.onBackPressed.call();

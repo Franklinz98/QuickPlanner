@@ -9,21 +9,21 @@ import 'package:app/models/project.dart';
 import 'package:app/models/project_preview.dart';
 import 'package:app/models/stock_item.dart';
 import 'package:app/models/user.dart';
+import 'package:app/provider/provider.dart';
 import 'package:app/widgets/list_tile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 class PhaseDetails extends StatefulWidget {
   final Function onBackPressed;
   final QPUser user;
-  final Phase phase;
 
   const PhaseDetails({
     Key key,
     @required this.user,
     @required this.onBackPressed,
-    @required this.phase,
   }) : super(key: key);
 
   @override
@@ -33,12 +33,14 @@ class PhaseDetails extends StatefulWidget {
 class _PhasetState extends State<PhaseDetails> with WidgetsBindingObserver {
   Brightness _brightnessValue;
   Stream<QuerySnapshot> _stockStream;
+  Phase phase;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _stockStream = getStockStream(widget.phase.reference.collection('stock'));
+    phase = Provider.of<QuickPlannerModel>(context, listen: false).phase;
+    _stockStream = getStockStream(phase.reference.collection('stock'));
   }
 
   @override
@@ -74,7 +76,7 @@ class _PhasetState extends State<PhaseDetails> with WidgetsBindingObserver {
           height: 32.0,
         ),
         ProjectDescription(
-            model: widget.phase,
+            model: phase,
             listTitle: 'Inventario:',
             deviceBrightness: _brightnessValue),
         Expanded(
@@ -104,6 +106,20 @@ class _PhasetState extends State<PhaseDetails> with WidgetsBindingObserver {
 
         if (snapshot.hasData && snapshot.data.docs.isNotEmpty) {
           List<QueryDocumentSnapshot> documents = snapshot.data.docs;
+          bool phaseHasWarnigns = false;
+          StockItem tempStock;
+          documents.forEach((document) {
+            tempStock = StockItem.fromJson(document.data());
+            phaseHasWarnigns |= tempStock.needed > 0;
+          });
+          updateState(
+              phaseHasWarnigns,
+              Provider.of<QuickPlannerModel>(context, listen: false)
+                  .project
+                  .reference,
+              Provider.of<QuickPlannerModel>(context, listen: false)
+                  .phase
+                  .reference);
           return ListView.builder(
             padding: EdgeInsets.all(16.0),
             itemBuilder: (_, index) {
